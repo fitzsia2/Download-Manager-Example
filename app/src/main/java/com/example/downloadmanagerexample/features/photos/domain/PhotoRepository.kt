@@ -7,4 +7,6 @@ interface PhotoRepository {
     val remotePhotoMetadataCacheStateStream: Flow<RemotePhotoMetadataCacheState>
 
     fun downloadPhoto(remotePhotoMetadata: RemotePhotoMetadata)
+
+    fun deletePhoto(remotePhotoMetadata: PhotoCacheState.Cached)
 }

@@ -24,4 +24,8 @@ class AndroidFileDataSource(
     override fun getDownloadedFiles(): List<File> {
         return downloadDirectory?.listFiles()?.toList() ?: emptyList()
     }
+
+    override fun deleteFile(file: File) {
+        file.delete()
+    }
 }

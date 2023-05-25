@@ -10,4 +10,6 @@ interface LocalFileDataSource {
     fun getDownloadedFile(fileName: String): File
 
     fun getDownloadedFiles(): List<File>
+
+    fun deleteFile(file: File)
 }

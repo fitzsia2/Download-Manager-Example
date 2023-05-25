@@ -93,6 +93,11 @@ class PhotoRepositoryImpl(
         }
     }
 
+    override fun deletePhoto(remotePhotoMetadata: PhotoCacheState.Cached) {
+        localFileDataSource.deleteFile(remotePhotoMetadata.photo.file)
+        updateCache(remotePhotoMetadata.metadata, PhotoCacheState.NotCached(remotePhotoMetadata.metadata))
+    }
+
     companion object {
 
         private val DOWNLOAD_STATE_POLL_PERIOD = 1.seconds
