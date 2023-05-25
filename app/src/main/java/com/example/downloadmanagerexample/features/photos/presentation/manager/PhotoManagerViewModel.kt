@@ -36,7 +36,7 @@ class PhotoManagerViewModel(
         photoRepository.downloadPhoto(photoCacheState.metadata)
     }
 
-    fun deletePhoto(photoCacheState: PhotoCacheState.Cached) {
+    fun deletePhoto(photoCacheState: PhotoCacheState) {
         viewModelScope.launch { photoRepository.deletePhoto(photoCacheState) }
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +29,7 @@ interface PhotoActions {
 
     fun downloadPhoto(photoCacheState: PhotoCacheState)
 
-    fun deletePhoto(photoCacheState: PhotoCacheState.Cached)
+    fun deletePhoto(photoCacheState: PhotoCacheState)
 }
 
 @Composable
@@ -40,7 +41,7 @@ fun PhotoManager(modifier: Modifier = Modifier, viewModel: PhotoManagerViewModel
                 viewModel.downloadPhoto(photoCacheState)
             }
 
-            override fun deletePhoto(photoCacheState: PhotoCacheState.Cached) {
+            override fun deletePhoto(photoCacheState: PhotoCacheState) {
                 viewModel.deletePhoto(photoCacheState)
             }
         }
@@ -110,16 +111,18 @@ private fun PhotoCacheState(photoCacheState: PhotoCacheState, actions: PhotoActi
             when (photoCacheState) {
                 is PhotoCacheState.NotCached -> actions.downloadPhoto(photoCacheState)
                 is PhotoCacheState.Cached -> actions.deletePhoto(photoCacheState)
+                is PhotoCacheState.Downloading -> actions.deletePhoto(photoCacheState)
                 else -> Unit
             }
         },
-        enabled = photoCacheState is PhotoCacheState.NotCached || photoCacheState is PhotoCacheState.Cached
+        enabled = photoCacheState !is PhotoCacheState.Error
     ) {
         AnimatedVisibility(visible = photoCacheState is PhotoCacheState.Downloading) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .padding(end = 12.dp)
-                    .size(24.dp)
+                    .size(24.dp),
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
         Text(text = text)

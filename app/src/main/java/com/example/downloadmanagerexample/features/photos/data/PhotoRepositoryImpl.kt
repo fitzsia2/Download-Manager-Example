@@ -97,8 +97,10 @@ class PhotoRepositoryImpl(
         }
     }
 
-    override suspend fun deletePhoto(remotePhotoMetadata: PhotoCacheState.Cached) {
-        localFileDataSource.deleteFile(remotePhotoMetadata.photo.file)
+    override suspend fun deletePhoto(remotePhotoMetadata: PhotoCacheState) {
+        if (remotePhotoMetadata is PhotoCacheState.Cached) {
+            localFileDataSource.deleteFile(remotePhotoMetadata.photo.file)
+        }
         remoteFileDataSource.removeDownload(remotePhotoMetadata.metadata.uri)
         updateCache(remotePhotoMetadata.metadata, PhotoCacheState.NotCached(remotePhotoMetadata.metadata))
     }

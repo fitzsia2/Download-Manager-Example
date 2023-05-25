@@ -8,5 +8,5 @@ interface PhotoRepository {
 
     fun downloadPhoto(remotePhotoMetadata: RemotePhotoMetadata)
 
-    suspend fun deletePhoto(remotePhotoMetadata: PhotoCacheState.Cached)
+    suspend fun deletePhoto(remotePhotoMetadata: PhotoCacheState)
 }
