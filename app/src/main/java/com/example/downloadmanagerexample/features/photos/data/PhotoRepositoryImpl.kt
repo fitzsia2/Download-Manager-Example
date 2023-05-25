@@ -38,7 +38,8 @@ class PhotoRepositoryImpl(
     private suspend fun getRemotePhotoMetadata(): List<RemotePhotoMetadata> {
         delay(2.seconds)
         val metadata = listOf(
-            RemotePhotoMetadata("Photo 1", "https://www.allaboutbirds.org/news/wp-content/uploads/2020/07/STanager-Shapiro-ML.jpg".toUri()),
+            RemotePhotoMetadata("Bird", "https://www.allaboutbirds.org/news/wp-content/uploads/2020/07/STanager-Shapiro-ML.jpg".toUri()),
+            RemotePhotoMetadata("Rohlik", "https://www.nopek.cz/userfiles/photogallery/big/rohlik-standard-43g__mi001-251.jpg".toUri()),
         )
         return metadata
     }
