@@ -28,6 +28,9 @@ class PhotoRepositoryImpl(
         appCoroutineScope.launch {
             val metadata = getRemotePhotoMetadata()
             val cachedStates = getCacheStates(metadata)
+            cachedStates.filterIsInstance<PhotoCacheState.Downloading>().forEach {
+                launchDownloadObserver(it.metadata)
+            }
             remotePhotoMetadataCacheStateStream.value = RemotePhotoMetadataCacheState.Synchronized(cachedStates)
         }
     }
