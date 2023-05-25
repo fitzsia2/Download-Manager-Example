@@ -1,5 +1,6 @@
 package com.example.downloadmanagerexample.core.data.android
 
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.Context
 import android.database.Cursor
@@ -54,13 +55,38 @@ class AndroidRemoteFileDataSource(
         }
     }
 
-    private data class RemoteDownload(val uri: Uri) {
+    override suspend fun removeDownload(uri: Uri) {
+        return withContext(appDispatchers.io) {
+            val cursor = downloadManager.query(DownloadManager.Query())
+            val matchingDownloads = buildList<RemoteDownload> {
+                while (cursor.moveToNext()) {
+                    try {
+                        val download = RemoteDownload.from(cursor)
+                        val matchesTargetDownload = download.uri == uri
+                        if (matchesTargetDownload) {
+                            add(download)
+                        }
+                    } catch (e: RemoteDownload.InvalidCursorIndexException) {
+                        Timber.e(e)
+                        continue
+                    }
+                }
+                cursor.close()
+            }
+            matchingDownloads.forEach { remoteDownload ->
+                downloadManager.remove(remoteDownload.id)
+            }
+        }
+    }
+
+    private data class RemoteDownload(val uri: Uri, val id: Long) {
 
         class InvalidCursorIndexException(uriIndex: Int) :
             Exception("Download manager returned invalid column indices! uriIndex:$uriIndex")
 
         companion object {
 
+            @SuppressLint("Range")
             fun from(cursor: Cursor): RemoteDownload {
                 val uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_URI)
                 if (uriIndex.isInvalid) {
@@ -74,7 +100,8 @@ class AndroidRemoteFileDataSource(
                 if (uri.isBlank()) {
                     Timber.e("Download uri is empty!")
                 }
-                return RemoteDownload(uri.toUri())
+                val id = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_ID))
+                return RemoteDownload(uri.toUri(), id)
             }
 
             private val Int.isInvalid: Boolean get() = this == -1

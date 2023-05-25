@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 class PhotoManagerViewModel(
     private val photoRepository: PhotoRepository,
@@ -36,6 +37,6 @@ class PhotoManagerViewModel(
     }
 
     fun deletePhoto(photoCacheState: PhotoCacheState.Cached) {
-        photoRepository.deletePhoto(photoCacheState)
+        viewModelScope.launch { photoRepository.deletePhoto(photoCacheState) }
     }
 }
