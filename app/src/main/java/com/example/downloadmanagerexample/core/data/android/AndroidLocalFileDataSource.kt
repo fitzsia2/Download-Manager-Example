@@ -5,7 +5,7 @@ import android.os.Environment
 import com.example.downloadmanagerexample.core.data.LocalFileDataSource
 import java.io.File
 
-class AndroidFileDataSource(
+class AndroidLocalFileDataSource(
     context: Context,
 ) : LocalFileDataSource {
 
