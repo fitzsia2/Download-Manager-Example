@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import com.example.downloadmanagerexample.core.theme.DownloadManagerExampleTheme
-import com.example.downloadmanagerexample.features.photos.presentation.manager.PhotoManager
+import com.example.downloadmanagerexample.features.files.presentation.manager.FileManager
 
 class MainActivity : ComponentActivity() {
 
@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             DownloadManagerExampleTheme {
-                PhotoManager(modifier = Modifier.fillMaxSize())
+                FileManager(modifier = Modifier.fillMaxSize())
             }
         }
     }
