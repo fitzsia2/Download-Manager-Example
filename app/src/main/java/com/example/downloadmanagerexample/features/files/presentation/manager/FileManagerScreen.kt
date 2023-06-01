@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
+import com.example.downloadmanagerexample.core.domain.DownloadError
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import org.koin.androidx.compose.getViewModel
 
@@ -33,7 +35,7 @@ interface FileActions {
 }
 
 @Composable
-fun FileManager(modifier: Modifier = Modifier, viewModel: FileManagerViewModel = getViewModel()) {
+fun FileManagerScreen(modifier: Modifier = Modifier, viewModel: FileManagerViewModel = getViewModel()) {
     val screenState = viewModel.screenStateStream.collectAsState().value
     val actions = remember {
         object : FileActions {
@@ -85,6 +87,9 @@ private fun FileCacheStateItem(cachedFileState: CachedFileState, actions: FileAc
             )
             CachedFileState(cachedFileState, actions = actions, modifier = Modifier.align(Alignment.CenterVertically))
         }
+        if (cachedFileState is CachedFileState.Error) {
+            ErrorMessage(cachedFileState.reason)
+        }
         AnimatedVisibility(visible = cachedFileState is CachedFileState.Cached) {
             if (cachedFileState is CachedFileState.Cached) {
                 AsyncImage(
@@ -98,24 +103,47 @@ private fun FileCacheStateItem(cachedFileState: CachedFileState, actions: FileAc
 }
 
 @Composable
+private fun ErrorMessage(reason: DownloadError) {
+    val text = when (reason) {
+        is DownloadError.CannotResume -> "Cannot resume"
+        is DownloadError.DeviceNotFound -> "DeviceNotFound"
+        is DownloadError.FileAlreadyExists -> "FileAlreadyExists"
+        is DownloadError.FileDownloadError -> "FileDownloadError"
+        is DownloadError.Http -> "Http: code:${reason.code}"
+        is DownloadError.HttpData -> "HttpData"
+        is DownloadError.InsufficientSpace -> "InsufficientSpace"
+        is DownloadError.TooManyRedirects -> "TooManyRedirects"
+        is DownloadError.UnhandledHttpCode -> "UnhandledHttpCode"
+        is DownloadError.Unknown -> "Unknown"
+    }
+    Text(text = "Failed: $text", color = MaterialTheme.colorScheme.error)
+}
+
+@Composable
 private fun CachedFileState(cachedFileState: CachedFileState, actions: FileActions, modifier: Modifier = Modifier) {
     val text = when (cachedFileState) {
         is CachedFileState.Cached -> "Delete"
-        is CachedFileState.Error -> "Error"
+        is CachedFileState.Error -> "Retry"
         is CachedFileState.Downloading -> "Downloading"
         is CachedFileState.NotCached -> "Download"
     }
+    val buttonColor = when (cachedFileState) {
+        is CachedFileState.Cached -> MaterialTheme.colorScheme.secondary
+        is CachedFileState.Downloading -> MaterialTheme.colorScheme.tertiary
+        is CachedFileState.Error -> MaterialTheme.colorScheme.error
+        is CachedFileState.NotCached -> MaterialTheme.colorScheme.primary
+    }
     Button(
         modifier = modifier,
+        colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
         onClick = {
             when (cachedFileState) {
                 is CachedFileState.NotCached -> actions.download(cachedFileState)
                 is CachedFileState.Cached -> actions.delete(cachedFileState)
                 is CachedFileState.Downloading -> actions.delete(cachedFileState)
-                else -> Unit
+                is CachedFileState.Error -> actions.download(cachedFileState)
             }
         },
-        enabled = cachedFileState !is CachedFileState.Error
     ) {
         AnimatedVisibility(visible = cachedFileState is CachedFileState.Downloading) {
             CircularProgressIndicator(

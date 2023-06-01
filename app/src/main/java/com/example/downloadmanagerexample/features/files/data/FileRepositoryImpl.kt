@@ -6,13 +6,11 @@ import com.example.downloadmanagerexample.core.data.RemoteFileDataSource
 import com.example.downloadmanagerexample.core.utils.AppCoroutineScope
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.FileRepository
-import com.example.downloadmanagerexample.features.files.domain.RemoteFile
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadata
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadataCacheState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import kotlin.time.Duration.Companion.seconds
 
 class FileRepositoryImpl(
@@ -27,10 +25,9 @@ class FileRepositoryImpl(
     init {
         appCoroutineScope.launch {
             val metadata = getRemoteFileMetadata()
-            val cachedStates = getCacheStates(metadata)
-            cachedStates.filterIsInstance<CachedFileState.Downloading>().forEach {
-                launchDownloadObserver(it.metadata)
-            }
+            val cachedStates = remoteFileDataSource.synchronize(metadata)
+            cachedStates.filterIsInstance<CachedFileState.Downloading>()
+                .forEach { cachedFileState -> launchDownloadObserver(cachedFileState.metadata) }
             remoteFileMetadataCacheStateStream.value = RemoteFileMetadataCacheState.Synchronized(cachedStates)
         }
     }
@@ -43,44 +40,38 @@ class FileRepositoryImpl(
         val metadata = listOf(
             RemoteFileMetadata("Bird", "https://www.allaboutbirds.org/news/wp-content/uploads/2020/07/STanager-Shapiro-ML.jpg".toUri()),
             RemoteFileMetadata("Rohlik", "https://www.nopek.cz/userfiles/photogallery/big/rohlik-standard-43g__mi001-251.jpg".toUri()),
+            RemoteFileMetadata("1GB", "https://speed.hetzner.de/1GB.bin".toUri()),
+            RemoteFileMetadata("10GB file", "https://speed.hetzner.de/10GB.bin".toUri()),
         )
         return metadata
     }
 
-    private suspend fun getCacheStates(remoteMapMetadataList: List<RemoteFileMetadata>): List<CachedFileState> {
-        return remoteMapMetadataList.map { getCacheState(it) }
+    private suspend fun getCacheState(metadata: RemoteFileMetadata): CachedFileState {
+        return remoteFileDataSource.getCachedFileState(metadata)
     }
 
-    private suspend fun getCacheState(mapMetadata: RemoteFileMetadata): CachedFileState {
-        val file = localFileDataSource.getDownloadedFile(mapMetadata.name)
-        return when {
-            remoteFileDataSource.isDownloadInProgress(mapMetadata.uri, file) -> CachedFileState.Downloading(mapMetadata)
-            file.length() > 0 -> CachedFileState.Cached(mapMetadata, RemoteFile(mapMetadata.name, file))
-            else -> CachedFileState.NotCached(mapMetadata)
-        }
+    override fun downloadFile(cachedFileState: CachedFileState) {
+        val metadatum = cachedFileState.metadata
+        val file = localFileDataSource.getDownloadedFile(metadatum.name)
+        remoteFileDataSource.downloadToFile(metadatum.uri, file)
+        val updatedState = CachedFileState.Downloading(metadatum)
+        updateCache(metadatum, updatedState)
+
+        launchDownloadObserver(metadatum)
     }
 
-    override fun downloadFile(remoteFileMetadata: RemoteFileMetadata) {
-        val file = localFileDataSource.getDownloadedFile(remoteFileMetadata.name)
-        remoteFileDataSource.downloadToFile(remoteFileMetadata.uri, file)
-        val updatedState = CachedFileState.Downloading(remoteFileMetadata)
-        updateCache(remoteFileMetadata, updatedState)
-
-        launchDownloadObserver(remoteFileMetadata)
-    }
-
-    private fun launchDownloadObserver(mapMetadata: RemoteFileMetadata) {
+    private fun launchDownloadObserver(metadata: RemoteFileMetadata) {
         appCoroutineScope.launch {
             while (true) {
-                when (val cacheState = getCacheState(mapMetadata)) {
+                when (val cacheState = getCacheState(metadata)) {
                     is CachedFileState.Downloading -> delay(DOWNLOAD_STATE_POLL_PERIOD)
                     is CachedFileState.Error -> {
-                        Timber.e(Exception(cacheState.metadata.toString()))
+                        updateCache(metadata, cacheState)
                         break
                     }
                     is CachedFileState.NotCached,
                     is CachedFileState.Cached -> {
-                        updateCache(mapMetadata, cacheState)
+                        updateCache(metadata, cacheState)
                         break
                     }
                 }

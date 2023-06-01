@@ -33,7 +33,7 @@ class FileManagerViewModel(
     }
 
     fun download(cachedFileState: CachedFileState) {
-        fileRepository.downloadFile(cachedFileState.metadata)
+        fileRepository.downloadFile(cachedFileState)
     }
 
     fun delete(cachedFileState: CachedFileState) {

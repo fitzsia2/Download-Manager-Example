@@ -6,7 +6,7 @@ interface FileRepository {
 
     val remoteFileMetadataCacheStateStream: Flow<RemoteFileMetadataCacheState>
 
-    fun downloadFile(remoteFileMetadata: RemoteFileMetadata)
+    fun downloadFile(cachedFileState: CachedFileState)
 
     suspend fun deleteFile(cachedFileState: CachedFileState)
 }
