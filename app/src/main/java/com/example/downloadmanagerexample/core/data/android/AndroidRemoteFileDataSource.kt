@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.Context
 import android.database.Cursor
-import android.net.Uri
 import androidx.core.content.getSystemService
 import androidx.core.net.toFile
 import androidx.core.net.toUri
@@ -16,8 +15,10 @@ import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.DownloadedFile
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadata
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 
 class AndroidRemoteFileDataSource(
     private val context: Context,
@@ -26,13 +27,27 @@ class AndroidRemoteFileDataSource(
 
     private val downloadManager = context.getSystemService<DownloadManager>()!!
 
-    override fun downloadToFile(uri: Uri, file: File) {
+    /**
+     * Dummy implementation for fetching metadata for remote files
+     */
+    override suspend fun getRemoteFileMetadata(): List<RemoteFileMetadata> {
+        delay(2.seconds)
+        val metadata = listOf(
+            RemoteFileMetadata("Bird", "https://www.allaboutbirds.org/news/wp-content/uploads/2020/07/STanager-Shapiro-ML.jpg"),
+            RemoteFileMetadata("Rohlik", "https://www.nopek.cz/userfiles/photogallery/big/rohlik-standard-43g__mi001-251.jpg"),
+            RemoteFileMetadata("1GB", "https://speed.hetzner.de/1GB.bin"),
+            RemoteFileMetadata("10GB file", "https://speed.hetzner.de/10GB.bin"),
+        )
+        return metadata
+    }
+
+    override fun downloadToFile(uri: String, file: File) {
         val request = createDownloadRequest(uri, file)
         downloadManager.enqueue(request)
     }
 
-    private fun createDownloadRequest(uri: Uri, file: File): DownloadManager.Request {
-        return DownloadManager.Request(uri).apply {
+    private fun createDownloadRequest(uri: String, file: File): DownloadManager.Request {
+        return DownloadManager.Request(uri.toUri()).apply {
             val title = context.getString(R.string.download_manager_download_in_progress, file.name)
             setTitle(title)
             setDestinationUri(file.toUri())
@@ -80,7 +95,7 @@ class AndroidRemoteFileDataSource(
             is RemoteDownload.Paused,
             is RemoteDownload.Pending,
             is RemoteDownload.Running -> CachedFileState.Downloading(metadata)
-            is RemoteDownload.Successful -> CachedFileState.Cached(metadata, DownloadedFile(metadata.name, remoteDownload.localUri.toFile()))
+            is RemoteDownload.Successful -> CachedFileState.Cached(metadata, DownloadedFile(metadata.name, remoteDownload.localUri.toUri().toFile()))
             null -> CachedFileState.NotCached(metadata)
         }
     }
@@ -93,7 +108,7 @@ class AndroidRemoteFileDataSource(
         }
     }
 
-    override suspend fun removeDownload(remoteUri: Uri) {
+    override suspend fun removeDownload(remoteUri: String) {
         return withIoDispatcher {
             getDownloadManagerDownloads()
                 .filter { download -> download.remoteUri == remoteUri }
@@ -111,36 +126,36 @@ class AndroidRemoteFileDataSource(
 
         val id: Long
 
-        val remoteUri: Uri
+        val remoteUri: String
 
         data class Pending(
             override val id: Long,
-            override val remoteUri: Uri,
+            override val remoteUri: String,
             override val state: Int,
         ) : RemoteDownload
 
         data class Running(
             override val id: Long,
-            override val remoteUri: Uri,
+            override val remoteUri: String,
             override val state: Int,
         ) : RemoteDownload
 
         data class Paused(
             override val id: Long,
-            override val remoteUri: Uri,
+            override val remoteUri: String,
             override val state: Int,
         ) : RemoteDownload
 
         data class Successful(
             override val id: Long,
-            override val remoteUri: Uri,
+            override val remoteUri: String,
             override val state: Int,
-            val localUri: Uri,
+            val localUri: String,
         ) : RemoteDownload
 
         data class Failed(
             override val id: Long,
-            override val remoteUri: Uri,
+            override val remoteUri: String,
             override val state: Int,
             val cause: DownloadError,
         ) : RemoteDownload
@@ -148,13 +163,13 @@ class AndroidRemoteFileDataSource(
         @SuppressLint("Range")
         class Factory(private val cursor: Cursor) {
 
-            private val uri get() = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_URI)).toUri()
+            private val uri get() = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_URI))
 
             private val id get() = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_ID))
 
             private val state get() = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
 
-            private val localFileUri get() = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)).toUri()
+            private val localFileUri get() = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
 
             private val error: DownloadError
                 get() {

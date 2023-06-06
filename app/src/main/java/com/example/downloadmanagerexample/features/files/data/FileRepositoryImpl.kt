@@ -1,6 +1,5 @@
 package com.example.downloadmanagerexample.features.files.data
 
-import androidx.core.net.toUri
 import com.example.downloadmanagerexample.core.data.LocalFileDataSource
 import com.example.downloadmanagerexample.core.data.RemoteFileDataSource
 import com.example.downloadmanagerexample.core.utils.AppCoroutineScope
@@ -24,26 +23,12 @@ class FileRepositoryImpl(
 
     init {
         appCoroutineScope.launch {
-            val metadata = getRemoteFileMetadata()
+            val metadata = remoteFileDataSource.getRemoteFileMetadata()
             val cachedStates = remoteFileDataSource.synchronize(metadata)
             cachedStates.filterIsInstance<CachedFileState.Downloading>()
                 .forEach { cachedFileState -> launchDownloadObserver(cachedFileState.metadata) }
             remoteFileMetadataCacheStateStream.value = RemoteFileMetadataCacheState.Synchronized(cachedStates)
         }
-    }
-
-    /**
-     * Dummy method for fetching metadata for remote files
-     */
-    private suspend fun getRemoteFileMetadata(): List<RemoteFileMetadata> {
-        delay(2.seconds)
-        val metadata = listOf(
-            RemoteFileMetadata("Bird", "https://www.allaboutbirds.org/news/wp-content/uploads/2020/07/STanager-Shapiro-ML.jpg".toUri()),
-            RemoteFileMetadata("Rohlik", "https://www.nopek.cz/userfiles/photogallery/big/rohlik-standard-43g__mi001-251.jpg".toUri()),
-            RemoteFileMetadata("1GB", "https://speed.hetzner.de/1GB.bin".toUri()),
-            RemoteFileMetadata("10GB file", "https://speed.hetzner.de/10GB.bin".toUri()),
-        )
-        return metadata
     }
 
     private suspend fun getCacheState(metadata: RemoteFileMetadata): CachedFileState {
