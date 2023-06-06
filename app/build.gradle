@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'de.mannodermaus.android-junit5' version '1.9.3.0'
 }
 
 android {
@@ -33,6 +34,7 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
         freeCompilerArgs += "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
+        freeCompilerArgs += "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
     }
     buildFeatures {
         compose true
@@ -62,7 +64,19 @@ dependencies {
     implementation "io.insert-koin:koin-androidx-compose:3.4.4"
     implementation "com.jakewharton.timber:timber:5.0.1"
     implementation "io.coil-kt:coil-compose:2.4.0"
+
+    def coroutines = "1.7.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutines"
+
+    testImplementation 'app.cash.turbine:turbine:0.13.0'
+    testImplementation "com.google.truth:truth:1.1.4"
     testImplementation 'junit:junit:4.13.2'
+    testImplementation "org.junit:junit-bom:5.9.3"
+    testImplementation "org.junit.jupiter:junit-jupiter"
+    testImplementation "org.junit.jupiter:junit-jupiter-params"
+    testImplementation "org.junit.vintage:junit-vintage-engine"
+
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation platform('androidx.compose:compose-bom:2022.10.00')
