@@ -6,5 +6,5 @@ sealed interface RemoteFileMetadataCacheState {
 
     data class Synchronized(val cachedFileStates: List<CachedFileState>) : RemoteFileMetadataCacheState
 
-    data class Error(val remoteFiles: List<RemoteFile>) : RemoteFileMetadataCacheState
+    data class Error(val downloadedFiles: List<DownloadedFile>) : RemoteFileMetadataCacheState
 }

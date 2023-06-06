@@ -13,7 +13,7 @@ import com.example.downloadmanagerexample.core.data.RemoteFileDataSource
 import com.example.downloadmanagerexample.core.domain.DownloadError
 import com.example.downloadmanagerexample.core.utils.AppDispatchers
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
-import com.example.downloadmanagerexample.features.files.domain.RemoteFile
+import com.example.downloadmanagerexample.features.files.domain.DownloadedFile
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadata
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -80,7 +80,7 @@ class AndroidRemoteFileDataSource(
             is RemoteDownload.Paused,
             is RemoteDownload.Pending,
             is RemoteDownload.Running -> CachedFileState.Downloading(metadata)
-            is RemoteDownload.Successful -> CachedFileState.Cached(metadata, RemoteFile(metadata.name, localUri.toFile()))
+            is RemoteDownload.Successful -> CachedFileState.Cached(metadata, DownloadedFile(metadata.name, localUri.toFile()))
             null -> CachedFileState.NotCached(metadata)
         }
     }
