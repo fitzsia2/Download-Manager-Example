@@ -1,4 +1,13 @@
 <resources>
     <string name="app_name">Download Manager Example</string>
     <string name="download_manager_download_in_progress">Downloading %s</string>
+    <string name="download_error_cannot_resume">Cannot resume</string>
+    <string name="download_error_file_already_exists">FileAlreadyExists</string>
+    <string name="download_error_insufficient_space">InsufficientSpace</string>
+    <string name="download_error_general">Something went wrong</string>
+    <string name="download_error_message">Failed: %s</string>
+    <string name="cached_file_state_button_delete">Delete</string>
+    <string name="cached_file_state_button_retry">Retry</string>
+    <string name="cached_file_state_button_downloading">Downloading</string>
+    <string name="cached_file_state_button_download">Download</string>
 </resources>

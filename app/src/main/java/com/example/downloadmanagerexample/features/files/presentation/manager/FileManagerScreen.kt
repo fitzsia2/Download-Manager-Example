@@ -20,12 +20,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
+import com.example.downloadmanagerexample.R
 import com.example.downloadmanagerexample.core.domain.DownloadError
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import org.koin.androidx.compose.getViewModel
+import timber.log.Timber
 
 interface FileActions {
 
@@ -104,28 +107,33 @@ private fun FileCacheStateItem(cachedFileState: CachedFileState, actions: FileAc
 
 @Composable
 private fun ErrorMessage(reason: DownloadError) {
-    val text = when (reason) {
-        is DownloadError.CannotResume -> "Cannot resume"
-        is DownloadError.DeviceNotFound -> "DeviceNotFound"
-        is DownloadError.FileAlreadyExists -> "FileAlreadyExists"
-        is DownloadError.FileDownloadError -> "FileDownloadError"
-        is DownloadError.Http -> "Http: code:${reason.code}"
-        is DownloadError.HttpData -> "HttpData"
-        is DownloadError.InsufficientSpace -> "InsufficientSpace"
-        is DownloadError.TooManyRedirects -> "TooManyRedirects"
-        is DownloadError.UnhandledHttpCode -> "UnhandledHttpCode"
-        is DownloadError.Unknown -> "Unknown"
+    val res = when (reason) {
+        is DownloadError.CannotResume -> R.string.download_error_cannot_resume
+        is DownloadError.FileAlreadyExists -> R.string.download_error_file_already_exists
+        is DownloadError.InsufficientSpace -> R.string.download_error_insufficient_space
+        is DownloadError.FileDownloadError,
+        is DownloadError.DeviceNotFound,
+        is DownloadError.Http,
+        is DownloadError.HttpData,
+        is DownloadError.TooManyRedirects,
+        is DownloadError.UnhandledHttpCode,
+        is DownloadError.Unknown -> {
+            Timber.w("Download error: $reason")
+            R.string.download_error_general
+        }
     }
-    Text(text = "Failed: $text", color = MaterialTheme.colorScheme.error)
+    val text = stringResource(res)
+    val formattedMessage = stringResource(R.string.download_error_message, text)
+    Text(text = formattedMessage, color = MaterialTheme.colorScheme.error)
 }
 
 @Composable
 private fun CachedFileState(cachedFileState: CachedFileState, actions: FileActions, modifier: Modifier = Modifier) {
     val text = when (cachedFileState) {
-        is CachedFileState.Cached -> "Delete"
-        is CachedFileState.Error -> "Retry"
-        is CachedFileState.Downloading -> "Downloading"
-        is CachedFileState.NotCached -> "Download"
+        is CachedFileState.Cached -> stringResource(R.string.cached_file_state_button_delete)
+        is CachedFileState.Error -> stringResource(R.string.cached_file_state_button_retry)
+        is CachedFileState.Downloading -> stringResource(R.string.cached_file_state_button_downloading)
+        is CachedFileState.NotCached -> stringResource(R.string.cached_file_state_button_download)
     }
     val buttonColor = when (cachedFileState) {
         is CachedFileState.Cached -> MaterialTheme.colorScheme.secondary
