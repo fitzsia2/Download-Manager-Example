@@ -65,10 +65,7 @@ class FileRepositoryImpl(
             while (true) {
                 when (val cacheState = getCacheState(metadata)) {
                     is CachedFileState.Downloading -> delay(DOWNLOAD_STATE_POLL_PERIOD)
-                    is CachedFileState.Error -> {
-                        updateCache(metadata, cacheState)
-                        break
-                    }
+                    is CachedFileState.Error,
                     is CachedFileState.NotCached,
                     is CachedFileState.Cached -> {
                         updateCache(metadata, cacheState)

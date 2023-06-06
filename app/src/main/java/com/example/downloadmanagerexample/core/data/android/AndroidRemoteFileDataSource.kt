@@ -15,6 +15,7 @@ import com.example.downloadmanagerexample.core.utils.AppDispatchers
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.DownloadedFile
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadata
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -39,11 +40,13 @@ class AndroidRemoteFileDataSource(
     }
 
     override suspend fun synchronize(metadata: List<RemoteFileMetadata>): List<CachedFileState> {
-        return withContext(appDispatchers.io) {
+        return withIoDispatcher {
             val downloads = getDownloadManagerDownloads()
             removeUnrecognizedDownloads(downloads, metadata)
-            metadata.associateWith { metadatum -> downloads.find { it.remoteUri == metadatum.uri } }
-                .map { entry -> entry.value.toCachedFileState(entry.key) }
+            metadata.map { metadatum ->
+                val download = downloads.find { download -> download.remoteUri == metadatum.uri }
+                createCachedFileState(download, metadatum)
+            }
         }
     }
 
@@ -59,46 +62,47 @@ class AndroidRemoteFileDataSource(
         return downloads
     }
 
-    private suspend fun removeUnrecognizedDownloads(
-        downloads: List<RemoteDownload>,
-        metadata: List<RemoteFileMetadata>
-    ) {
-        downloads.associateWith { download ->
-            metadata.find { metadatum -> metadatum.uri == download.remoteUri }
+    private suspend fun removeUnrecognizedDownloads(downloads: List<RemoteDownload>, metadata: List<RemoteFileMetadata>) {
+        downloads.forEach { download ->
+            val metadatum = metadata.find { metadatum -> metadatum.uri == download.remoteUri }
+            if (metadatum == null) {
+                removeDownload(download.remoteUri)
+            }
         }
-            .filterValues { it == null }
-            .keys
-            .forEach { removeDownload(it.remoteUri) }
     }
 
-    private suspend fun RemoteDownload?.toCachedFileState(metadata: RemoteFileMetadata): CachedFileState {
-        return when (this) {
+    private suspend fun createCachedFileState(remoteDownload: RemoteDownload?, metadata: RemoteFileMetadata): CachedFileState {
+        return when (remoteDownload) {
             is RemoteDownload.Failed -> {
-                removeDownload(remoteUri)
-                CachedFileState.Error(metadata, this.cause)
+                removeDownload(remoteDownload.remoteUri)
+                CachedFileState.Error(metadata, remoteDownload.cause)
             }
             is RemoteDownload.Paused,
             is RemoteDownload.Pending,
             is RemoteDownload.Running -> CachedFileState.Downloading(metadata)
-            is RemoteDownload.Successful -> CachedFileState.Cached(metadata, DownloadedFile(metadata.name, localUri.toFile()))
+            is RemoteDownload.Successful -> CachedFileState.Cached(metadata, DownloadedFile(metadata.name, remoteDownload.localUri.toFile()))
             null -> CachedFileState.NotCached(metadata)
         }
     }
 
     override suspend fun getCachedFileState(metadata: RemoteFileMetadata): CachedFileState {
-        return getDownloadManagerDownloads()
-            .find { it.remoteUri == metadata.uri }
-            .toCachedFileState(metadata)
+        return withIoDispatcher {
+            val remoteDownload = getDownloadManagerDownloads()
+                .find { download -> download.remoteUri == metadata.uri }
+            createCachedFileState(remoteDownload, metadata)
+        }
     }
 
     override suspend fun removeDownload(remoteUri: Uri) {
-        return withContext(appDispatchers.io) {
+        return withIoDispatcher {
             getDownloadManagerDownloads()
                 .filter { download -> download.remoteUri == remoteUri }
-                .forEach { download ->
-                    downloadManager.remove(download.id)
-                }
+                .forEach { download -> downloadManager.remove(download.id) }
         }
+    }
+
+    private suspend fun <T> withIoDispatcher(block: suspend CoroutineScope.() -> T): T {
+        return withContext(appDispatchers.io) { block() }
     }
 
     private sealed interface RemoteDownload {
@@ -141,18 +145,18 @@ class AndroidRemoteFileDataSource(
             val cause: DownloadError,
         ) : RemoteDownload
 
+        @SuppressLint("Range")
         class Factory(private val cursor: Cursor) {
 
-            private val uri @SuppressLint("Range") get() = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_URI)).toUri()
+            private val uri get() = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_URI)).toUri()
 
-            private val id @SuppressLint("Range") get() = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_ID))
+            private val id get() = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_ID))
 
-            private val state @SuppressLint("Range") get() = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+            private val state get() = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
 
-            private val localFileUri @SuppressLint("Range") get() = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)).toUri()
+            private val localFileUri get() = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)).toUri()
 
             private val error: DownloadError
-                @SuppressLint("Range")
                 get() {
                     val reason = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_REASON))
                     return when (reason) {
