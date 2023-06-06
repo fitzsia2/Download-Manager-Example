@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.FileRepository
-import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadataCacheState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -21,13 +20,7 @@ class FileManagerViewModel(
 
     init {
         fileRepository.remoteFileMetadataCacheStateStream
-            .map {
-                when (it) {
-                    is RemoteFileMetadataCacheState.Error -> FileManagerScreenState.Error
-                    is RemoteFileMetadataCacheState.Synchronized -> FileManagerScreenState.Loaded(it.cachedFileStates)
-                    is RemoteFileMetadataCacheState.Synchronizing -> FileManagerScreenState.Loading
-                }
-            }
+            .map(FileManagerScreenState::invoke)
             .onEach { _screenStateStream.value = it }
             .launchIn(viewModelScope)
     }

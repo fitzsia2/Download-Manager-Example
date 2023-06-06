@@ -55,7 +55,7 @@ fun FileManagerScreen(modifier: Modifier = Modifier, viewModel: FileManagerViewM
                 .fillMaxSize()
         ) {
             when (screenState) {
-                is FileManagerScreenState.Error -> TODO()
+                is FileManagerScreenState.Error -> TODO() // Create full screen error state
                 is FileManagerScreenState.Loaded -> Loaded(screenState = screenState, actions)
                 is FileManagerScreenState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
