@@ -48,6 +48,6 @@ class FileRepositoryImpl(
 
     companion object {
 
-        private val DOWNLOAD_STATE_POLL_PERIOD = 1.seconds
+        private val DOWNLOAD_STATE_POLL_PERIOD = 200.milliseconds
     }
 }
