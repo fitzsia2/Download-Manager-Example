@@ -4,7 +4,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface FileRepository {
 
-    val remoteFileMetadataCacheStateStream: Flow<RemoteFileMetadataCacheState>
+    suspend fun getAvailableDownloads(): List<RemoteFileMetadata>
+
+    fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>>
 
     fun downloadFile(cachedFileState: CachedFileState)
 

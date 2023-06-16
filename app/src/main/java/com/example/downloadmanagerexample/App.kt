@@ -12,7 +12,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         startKoin()
-        Timber.plant(Timber.DebugTree())
+        initTimber()
     }
 
     private fun startKoin() {
@@ -20,5 +20,9 @@ class App : Application() {
             androidContext(this@App)
             modules(coreModule, filesModule)
         }
+    }
+
+    private fun initTimber() {
+        Timber.plant(Timber.DebugTree())
     }
 }

@@ -19,10 +19,17 @@ class FileManagerViewModel(
     val screenStateStream: StateFlow<FileManagerScreenState> = _screenStateStream
 
     init {
-        fileRepository.remoteFileMetadataCacheStateStream
-            .map(FileManagerScreenState::invoke)
-            .onEach { _screenStateStream.value = it }
-            .launchIn(viewModelScope)
+        viewModelScope.launch {
+            try {
+                val availableDownloads = fileRepository.getAvailableDownloads()
+                fileRepository.getCachedFileStateStream(availableDownloads)
+                    .map(FileManagerScreenState::Loaded)
+                    .onEach { _screenStateStream.value = it }
+                    .launchIn(viewModelScope)
+            } catch (t: Throwable) {
+                _screenStateStream.value = FileManagerScreenState.Error
+            }
+        }
     }
 
     fun download(cachedFileState: CachedFileState) {
