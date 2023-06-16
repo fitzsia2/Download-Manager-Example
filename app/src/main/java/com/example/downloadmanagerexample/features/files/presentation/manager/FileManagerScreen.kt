@@ -97,7 +97,7 @@ private fun FileCacheStateItem(cachedFileState: CachedFileState, actions: FileAc
             if (cachedFileState is CachedFileState.Cached) {
                 AsyncImage(
                     modifier = Modifier.fillMaxWidth(),
-                    model = cachedFileState.file.file.toUri(),
+                    model = cachedFileState.downloadedFile.file.toUri(),
                     contentDescription = cachedFileState.metadata.name
                 )
             }

@@ -8,7 +8,7 @@ sealed interface CachedFileState {
 
     data class NotCached(override val metadata: RemoteFileMetadata) : CachedFileState
 
-    data class Cached(override val metadata: RemoteFileMetadata, val file: DownloadedFile) : CachedFileState
+    data class Cached(override val metadata: RemoteFileMetadata, val downloadedFile: DownloadedFile) : CachedFileState
 
     data class Error(override val metadata: RemoteFileMetadata, val reason: DownloadError) : CachedFileState
 

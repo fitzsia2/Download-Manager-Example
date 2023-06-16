@@ -8,7 +8,7 @@ import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetada
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 class FileRepositoryImpl(
     private val localFileDataSource: LocalFileDataSource,
@@ -41,7 +41,7 @@ class FileRepositoryImpl(
 
     override suspend fun deleteFile(cachedFileState: CachedFileState) {
         if (cachedFileState is CachedFileState.Cached) {
-            localFileDataSource.deleteFile(cachedFileState.file.file)
+            localFileDataSource.deleteFile(cachedFileState.downloadedFile.file)
         }
         remoteFileDataSource.removeDownload(cachedFileState.metadata.uri)
     }
