@@ -5,9 +5,11 @@ import com.example.downloadmanagerexample.core.data.RemoteFileDataSource
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.FileRepository
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadata
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import kotlin.time.Duration.Companion.milliseconds
 
 class FileRepositoryImpl(
@@ -21,7 +23,7 @@ class FileRepositoryImpl(
 
     override fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>> {
         return flow {
-            while (true) {
+            while (currentCoroutineContext().isActive) {
                 val cacheStates = metadata.map { getCacheState(it) }
                 emit(cacheStates)
                 delay(DOWNLOAD_STATE_POLL_PERIOD)
