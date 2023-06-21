@@ -18,11 +18,8 @@ internal class FakeRemoteFileDataSource : RemoteFileDataSource {
     override fun downloadToFile(uri: String, file: File) {
     }
 
-    override suspend fun synchronize(metadata: List<RemoteFileMetadata>): List<CachedFileState> {
-        return metadata.map { metadatum ->
-            val cachedFileState = cachedFileStates.find { it.metadata == metadatum }
-            cachedFileState ?: CachedFileState.NotCached(metadatum)
-        }
+    override suspend fun synchronize(metadata: List<RemoteFileMetadata>) {
+        // Not implemented
     }
 
     override suspend fun getCachedFileState(metadata: RemoteFileMetadata): CachedFileState {

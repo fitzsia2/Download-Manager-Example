@@ -22,6 +22,7 @@ class FileManagerViewModel(
         viewModelScope.launch {
             try {
                 val availableDownloads = fileRepository.getAvailableDownloads()
+                fileRepository.synchronize(availableDownloads)
                 fileRepository.getCachedFileStateStream(availableDownloads)
                     .map(FileManagerScreenState::Loaded)
                     .onEach { _screenStateStream.value = it }

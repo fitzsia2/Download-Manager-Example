@@ -10,7 +10,7 @@ interface RemoteFileDataSource {
 
     fun downloadToFile(uri: String, file: File)
 
-    suspend fun synchronize(metadata: List<RemoteFileMetadata>): List<CachedFileState>
+    suspend fun synchronize(metadata: List<RemoteFileMetadata>)
 
     suspend fun getCachedFileState(metadata: RemoteFileMetadata): CachedFileState
 

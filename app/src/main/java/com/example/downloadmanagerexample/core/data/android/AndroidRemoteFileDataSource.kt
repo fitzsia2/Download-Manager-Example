@@ -54,14 +54,10 @@ class AndroidRemoteFileDataSource(
         }
     }
 
-    override suspend fun synchronize(metadata: List<RemoteFileMetadata>): List<CachedFileState> {
+    override suspend fun synchronize(metadata: List<RemoteFileMetadata>) {
         return withIoDispatcher {
             val downloads = getDownloadManagerDownloads()
             removeUnrecognizedDownloads(downloads, metadata)
-            metadata.map { metadatum ->
-                val download = downloads.find { download -> download.remoteUri == metadatum.uri }
-                createCachedFileState(download, metadatum)
-            }
         }
     }
 
@@ -86,12 +82,9 @@ class AndroidRemoteFileDataSource(
         }
     }
 
-    private suspend fun createCachedFileState(remoteDownload: RemoteDownload?, metadata: RemoteFileMetadata): CachedFileState {
+    private fun createCachedFileState(remoteDownload: RemoteDownload?, metadata: RemoteFileMetadata): CachedFileState {
         return when (remoteDownload) {
-            is RemoteDownload.Failed -> {
-                removeDownload(remoteDownload.remoteUri)
-                CachedFileState.Error(metadata, remoteDownload.cause)
-            }
+            is RemoteDownload.Failed -> CachedFileState.Error(metadata, remoteDownload.cause)
             is RemoteDownload.Paused,
             is RemoteDownload.Pending,
             is RemoteDownload.Running -> CachedFileState.Downloading(metadata)

@@ -21,6 +21,10 @@ class FileRepositoryImpl(
         return remoteFileDataSource.getRemoteFileMetadata()
     }
 
+    override suspend fun synchronize(metadata: List<RemoteFileMetadata>) {
+        remoteFileDataSource.synchronize(metadata)
+    }
+
     override fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>> {
         return flow {
             while (currentCoroutineContext().isActive) {
@@ -50,6 +54,6 @@ class FileRepositoryImpl(
 
     companion object {
 
-        private val DOWNLOAD_STATE_POLL_PERIOD = 200.milliseconds
+        private val DOWNLOAD_STATE_POLL_PERIOD = 2000.milliseconds
     }
 }
