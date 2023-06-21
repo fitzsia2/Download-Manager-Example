@@ -122,8 +122,6 @@ class AndroidRemoteFileDataSource(
 
     private sealed interface RemoteDownload {
 
-        val state: Int
-
         val id: Long
 
         val remoteUri: String
@@ -131,32 +129,27 @@ class AndroidRemoteFileDataSource(
         data class Pending(
             override val id: Long,
             override val remoteUri: String,
-            override val state: Int,
         ) : RemoteDownload
 
         data class Running(
             override val id: Long,
             override val remoteUri: String,
-            override val state: Int,
         ) : RemoteDownload
 
         data class Paused(
             override val id: Long,
             override val remoteUri: String,
-            override val state: Int,
         ) : RemoteDownload
 
         data class Successful(
             override val id: Long,
             override val remoteUri: String,
-            override val state: Int,
             val localUri: String,
         ) : RemoteDownload
 
         data class Failed(
             override val id: Long,
             override val remoteUri: String,
-            override val state: Int,
             val cause: DownloadError,
         ) : RemoteDownload
 
@@ -190,11 +183,11 @@ class AndroidRemoteFileDataSource(
 
             fun create(): RemoteDownload? {
                 return when (state) {
-                    DownloadManager.STATUS_PENDING -> Pending(id, uri, state)
-                    DownloadManager.STATUS_RUNNING -> Running(id, uri, state)
-                    DownloadManager.STATUS_PAUSED -> Paused(id, uri, state)
-                    DownloadManager.STATUS_SUCCESSFUL -> Successful(id, uri, state, localFileUri)
-                    DownloadManager.STATUS_FAILED -> Failed(id, uri, state, error)
+                    DownloadManager.STATUS_PENDING -> Pending(id, uri)
+                    DownloadManager.STATUS_RUNNING -> Running(id, uri)
+                    DownloadManager.STATUS_PAUSED -> Paused(id, uri)
+                    DownloadManager.STATUS_SUCCESSFUL -> Successful(id, uri, localFileUri)
+                    DownloadManager.STATUS_FAILED -> Failed(id, uri, error)
                     else -> null
                 }
             }
