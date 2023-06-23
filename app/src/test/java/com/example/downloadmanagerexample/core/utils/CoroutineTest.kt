@@ -9,4 +9,7 @@ internal abstract class CoroutineTest(testDispatcher: TestDispatcher = StandardT
 
     @field:RegisterExtension
     val coroutinesExtension = CoroutinesExtension(testDispatcher)
+
+    var testAppCoroutineScope = TestAppCoroutineScope(testDispatcher)
+        private set
 }

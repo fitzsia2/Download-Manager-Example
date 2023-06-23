@@ -2,16 +2,20 @@ package com.example.downloadmanagerexample.features.files.data
 
 import com.example.downloadmanagerexample.core.data.LocalFileDataSource
 import com.example.downloadmanagerexample.core.data.RemoteFileDataSource
+import com.example.downloadmanagerexample.core.utils.AppCoroutineScope
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.FileRepository
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadata
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.shareIn
 import kotlin.time.Duration.Companion.milliseconds
 
 class FileRepositoryImpl(
+    private val appCoroutineScope: AppCoroutineScope,
     private val localFileDataSource: LocalFileDataSource,
     private val remoteFileDataSource: RemoteFileDataSource,
 ) : FileRepository {
@@ -31,7 +35,13 @@ class FileRepositoryImpl(
                 emit(cacheStates)
                 delay(DOWNLOAD_STATE_POLL_PERIOD)
             }
-        }.distinctUntilChanged()
+        }
+            .distinctUntilChanged()
+            .shareIn(
+                scope = appCoroutineScope,
+                started = SharingStarted.WhileSubscribed(),
+                replay = 1
+            )
     }
 
     private suspend fun getCacheState(metadata: RemoteFileMetadata): CachedFileState {

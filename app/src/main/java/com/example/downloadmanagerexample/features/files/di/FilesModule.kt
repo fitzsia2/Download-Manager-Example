@@ -7,6 +7,12 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val filesModule = module {
-    single<FileRepository> { FileRepositoryImpl(get(), get()) }
+    single<FileRepository> {
+        FileRepositoryImpl(
+            appCoroutineScope = get(),
+            localFileDataSource = get(),
+            remoteFileDataSource = get()
+        )
+    }
     viewModel { FileManagerViewModel(get()) }
 }

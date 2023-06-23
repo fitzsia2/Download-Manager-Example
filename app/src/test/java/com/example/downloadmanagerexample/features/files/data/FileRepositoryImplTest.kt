@@ -29,7 +29,7 @@ internal class FileRepositoryImplTest : CoroutineTest() {
         tempFolder.listDirectoryEntries().forEach { it.deleteIfExists() }
     }
 
-    private fun getUnderTest(): FileRepository = FileRepositoryImpl(fakeLocalFileDataSource, fakeRemoteFileDataSource)
+    private fun getUnderTest(): FileRepository = FileRepositoryImpl(testAppCoroutineScope, fakeLocalFileDataSource, fakeRemoteFileDataSource)
 
     @Test
     fun `State stream emits Downloading when file is downloading`() = runTest {
