@@ -12,7 +12,7 @@ interface FileRepository {
      */
     suspend fun synchronize(metadata: List<RemoteFileMetadata>)
 
-    fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>>
+    suspend fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>>
 
     fun downloadFile(cachedFileState: CachedFileState)
 

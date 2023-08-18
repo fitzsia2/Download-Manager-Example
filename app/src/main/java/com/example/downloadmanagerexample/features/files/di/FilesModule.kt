@@ -10,6 +10,7 @@ val filesModule = module {
     single<FileRepository> {
         FileRepositoryImpl(
             appCoroutineScope = get(),
+            appDispatchers = get(),
             localFileDataSource = get(),
             remoteFileDataSource = get()
         )

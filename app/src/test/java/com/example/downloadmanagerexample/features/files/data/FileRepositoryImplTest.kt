@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.example.downloadmanagerexample.core.data.fake.FakeLocalFileDataSource
 import com.example.downloadmanagerexample.core.data.fake.FakeRemoteFileDataSource
 import com.example.downloadmanagerexample.core.utils.CoroutineTest
+import com.example.downloadmanagerexample.core.utils.TestAppDispatchers
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.DownloadedFile
 import com.example.downloadmanagerexample.features.files.domain.FileRepository
@@ -29,7 +30,12 @@ internal class FileRepositoryImplTest : CoroutineTest() {
         tempFolder.listDirectoryEntries().forEach { it.deleteIfExists() }
     }
 
-    private fun getUnderTest(): FileRepository = FileRepositoryImpl(testAppCoroutineScope, fakeLocalFileDataSource, fakeRemoteFileDataSource)
+    private fun getUnderTest(): FileRepository = FileRepositoryImpl(
+        testAppCoroutineScope,
+        TestAppDispatchers,
+        fakeLocalFileDataSource,
+        fakeRemoteFileDataSource
+    )
 
     @Test
     fun `State stream emits Downloading when file is downloading`() = runTest {
