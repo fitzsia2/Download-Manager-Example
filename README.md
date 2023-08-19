@@ -137,6 +137,8 @@ my repo.
 
 We can optimize this further by sharing the returned flow. This way, we will not
 have a process polling the download manager for each observer of the stream 💪
+Since the flows returned here depend on metadata, we need to cache them. I’ve
+wrapped the operation in `withContext()` to ensure access to our cache is thread safe.
 
 ```kotlin
 class FileRepositoryImpl(
@@ -145,14 +147,27 @@ class FileRepositoryImpl(
     private val remoteFileDataSource: RemoteFileDataSource,
 ) : FileRepository {
 
-    override fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>> {
-        return flow {...}
-            .distinctUntilChanged()
-            .shareIn(
-                scope = appCoroutineScope,
-                started = SharingStarted.WhileSubscribed(),
-                replay = 1
-            )
+    private val metadataCachedFileStateStreamMap = 
+       mutableMapOf<List<RemoteFileMetadata>, Flow<List<CachedFileState>>>()
+
+    override suspend fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>> {
+        return withContext(appDispatchers.main) {
+            val cachedFileStateStream = metadataCachedFileStateStreamMap[metadata] ?: flow {
+                while (true) {
+                    val cacheStates = metadata.map { getCacheState(it) }
+                    emit(cacheStates)
+                    delay(DOWNLOAD_STATE_POLL_PERIOD)
+                }
+            }
+                .distinctUntilChanged()
+                .shareIn(
+                    scope = appCoroutineScope,
+                    started = SharingStarted.WhileSubscribed(),
+                    replay = 1
+                )
+            metadataCachedFileStateStreamMap[metadata] = cachedFileStateStream
+            cachedFileStateStream
+        }
     }
 }
 ```
