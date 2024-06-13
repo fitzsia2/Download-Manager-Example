@@ -28,7 +28,6 @@ import com.example.downloadmanagerexample.R
 import com.example.downloadmanagerexample.core.domain.DownloadError
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import org.koin.androidx.compose.getViewModel
-import timber.log.Timber
 
 interface FileActions {
 
@@ -117,10 +116,7 @@ private fun ErrorMessage(reason: DownloadError) {
         is DownloadError.HttpData,
         is DownloadError.TooManyRedirects,
         is DownloadError.UnhandledHttpCode,
-        is DownloadError.Unknown -> {
-            Timber.w("Download error: $reason")
-            R.string.download_error_general
-        }
+        is DownloadError.Unknown -> R.string.download_error_general
     }
     val text = stringResource(res)
     val formattedMessage = stringResource(R.string.download_error_message, text)

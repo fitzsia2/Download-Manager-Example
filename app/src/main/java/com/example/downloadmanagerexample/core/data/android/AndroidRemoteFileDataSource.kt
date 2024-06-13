@@ -164,7 +164,7 @@ class AndroidRemoteFileDataSource(
                         DownloadManager.ERROR_UNKNOWN -> DownloadError.Unknown
                         DownloadManager.ERROR_FILE_ERROR -> DownloadError.FileDownloadError
                         DownloadManager.ERROR_UNHANDLED_HTTP_CODE -> DownloadError.UnhandledHttpCode
-                        DownloadManager.ERROR_HTTP_DATA_ERROR -> DownloadError.HttpData
+                        DownloadManager.ERROR_HTTP_DATA_ERROR -> DownloadError.Http(reason)
                         DownloadManager.ERROR_TOO_MANY_REDIRECTS -> DownloadError.TooManyRedirects
                         DownloadManager.ERROR_INSUFFICIENT_SPACE -> DownloadError.InsufficientSpace
                         DownloadManager.ERROR_DEVICE_NOT_FOUND -> DownloadError.DeviceNotFound
