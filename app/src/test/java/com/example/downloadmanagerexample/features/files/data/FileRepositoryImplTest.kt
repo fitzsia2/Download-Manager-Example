@@ -4,12 +4,12 @@ import app.cash.turbine.test
 import com.example.downloadmanagerexample.core.data.fake.FakeLocalFileDataSource
 import com.example.downloadmanagerexample.core.data.fake.FakeRemoteFileDataSource
 import com.example.downloadmanagerexample.core.utils.CoroutineTest
-import com.example.downloadmanagerexample.core.utils.TestAppDispatchers
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.DownloadedFile
 import com.example.downloadmanagerexample.features.files.domain.FileRepository
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadata
 import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -32,7 +32,6 @@ internal class FileRepositoryImplTest : CoroutineTest() {
 
     private fun getUnderTest(): FileRepository = FileRepositoryImpl(
         testAppCoroutineScope,
-        TestAppDispatchers,
         fakeLocalFileDataSource,
         fakeRemoteFileDataSource
     )
@@ -83,6 +82,22 @@ internal class FileRepositoryImplTest : CoroutineTest() {
 
             fakeRemoteFileDataSource.cachedFileStates = metadata.mapToCached()
             assertThat(awaitItem().first()).isInstanceOf(CachedFileState.Cached::class.java)
+        }
+    }
+
+    @Test
+    fun `Does not create the same stream for the same metadata`() {
+        val metadata = listOf(RemoteFileMetadata("", ""))
+        val actual: MutableList<Flow<List<CachedFileState>>> = mutableListOf()
+        val underTest = getUnderTest()
+
+        repeat(4) {
+            val stream: Flow<List<CachedFileState>> = underTest.getCachedFileStateStream(metadata)
+            actual.add(stream)
+        }
+
+        actual.forEach {
+            assertThat(it).isSameInstanceAs(actual[0])
         }
     }
 

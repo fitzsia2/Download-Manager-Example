@@ -3,7 +3,6 @@ package com.example.downloadmanagerexample.features.files.data
 import com.example.downloadmanagerexample.core.data.LocalFileDataSource
 import com.example.downloadmanagerexample.core.data.RemoteFileDataSource
 import com.example.downloadmanagerexample.core.utils.AppCoroutineScope
-import com.example.downloadmanagerexample.core.utils.AppDispatchers
 import com.example.downloadmanagerexample.features.files.domain.CachedFileState
 import com.example.downloadmanagerexample.features.files.domain.FileRepository
 import com.example.downloadmanagerexample.features.files.domain.RemoteFileMetadata
@@ -13,12 +12,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 class FileRepositoryImpl(
     private val appCoroutineScope: AppCoroutineScope,
-    private val appDispatchers: AppDispatchers,
     private val localFileDataSource: LocalFileDataSource,
     private val remoteFileDataSource: RemoteFileDataSource,
 ) : FileRepository {
@@ -33,23 +30,25 @@ class FileRepositoryImpl(
         remoteFileDataSource.synchronize(metadata)
     }
 
-    override suspend fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>> {
-        return withContext(appDispatchers.main) {
-            val cachedFileStateStream = metadataCachedFileStateStreamMap[metadata] ?: flow {
-                while (true) {
-                    val cacheStates = metadata.map { getCacheState(it) }
-                    emit(cacheStates)
-                    delay(DOWNLOAD_STATE_POLL_PERIOD)
-                }
+    override fun getCachedFileStateStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>> {
+        val cachedFileStateStream = metadataCachedFileStateStreamMap[metadata] ?: createDownloadObserverStream(metadata)
+            .distinctUntilChanged()
+            .shareIn(
+                scope = appCoroutineScope,
+                started = SharingStarted.WhileSubscribed(),
+                replay = 1
+            )
+        metadataCachedFileStateStreamMap[metadata] = cachedFileStateStream
+        return cachedFileStateStream
+    }
+
+    private fun createDownloadObserverStream(metadata: List<RemoteFileMetadata>): Flow<List<CachedFileState>> {
+        return flow {
+            while (true) {
+                val cacheStates = metadata.map { getCacheState(it) }
+                emit(cacheStates)
+                delay(DOWNLOAD_STATE_POLL_PERIOD)
             }
-                .distinctUntilChanged()
-                .shareIn(
-                    scope = appCoroutineScope,
-                    started = SharingStarted.WhileSubscribed(),
-                    replay = 1
-                )
-            metadataCachedFileStateStreamMap[metadata] = cachedFileStateStream
-            cachedFileStateStream
         }
     }
 
