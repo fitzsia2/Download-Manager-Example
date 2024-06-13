@@ -7,7 +7,6 @@ import com.example.downloadmanagerexample.features.files.domain.FileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
@@ -24,9 +23,8 @@ class FileManagerViewModel(
                 val availableDownloads = fileRepository.getAvailableDownloads()
                 fileRepository.synchronize(availableDownloads)
                 fileRepository.getCachedFileStateStream(availableDownloads)
-                    .map(FileManagerScreenState::Loaded)
-                    .onEach { _screenStateStream.value = it }
-                    .launchIn(viewModelScope)
+                    .onEach { cachedFileState -> _screenStateStream.value = FileManagerScreenState.Loaded(cachedFileState) }
+                    .launchIn(this)
             } catch (t: Throwable) {
                 _screenStateStream.value = FileManagerScreenState.Error
             }
